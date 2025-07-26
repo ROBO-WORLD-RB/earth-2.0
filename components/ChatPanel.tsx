@@ -11,6 +11,9 @@ import FilePreview from './FilePreview';
 import MessageActions from './MessageActions';
 import InstallIcon from './icons/InstallIcon';
 import VoiceControls from './VoiceControls';
+import EnhancedCodeBlock from './EnhancedCodeBlock';
+import DiagramRenderer from './DiagramRenderer';
+import MathRenderer from './MathRenderer';
 import { usePWA } from '../services/pwaService';
 import { voiceService } from '../services/voiceService';
 
@@ -135,9 +138,15 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
               <div className="text-[16px] leading-[1.7] pt-2 text-gray-800 dark:text-gray-200 max-w-3xl text-left">
                 <ReactMarkdown
                   components={{
-                    p: ({node, ...props}) => <p className="mb-5 last:mb-2 leading-[1.8] text-left" {...props} />,
-                    ol: ({node, ...props}) => <ol className="list-decimal list-outside pl-6 my-5 space-y-2" {...props} />,
-                    ul: ({node, ...props}) => <ul className="list-disc list-outside pl-6 my-5 space-y-2" {...props} />,
+                    p: ({node, children, ...props}) => {
+                      const content = String(children);
+                      // Check for mathematical expressions
+                      if (content.includes('\\') && /\\[a-zA-Z]+/.test(content)) {
+                        return <MathRenderer content={content} inline={false} />;
+                      }
+                      return <p className="mb-5 last:mb-2 leading-[1.8] text-left" {...props}>{children}</p>;
+                    },
+
                     li: ({node, ...props}) => <li className="pl-2 mb-1 leading-[1.7] text-left" {...props} />,
                     strong: ({node, ...props}) => <strong className="font-semibold text-gray-900 dark:text-gray-100" {...props} />,
                     em: ({node, ...props}) => <em className="italic text-gray-700 dark:text-gray-300" {...props} />,
@@ -145,35 +154,68 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
                     h2: ({node, ...props}) => <h2 className="text-xl font-bold mt-7 mb-3 text-gray-900 dark:text-gray-100" {...props} />,
                     h3: ({node, ...props}) => <h3 className="text-lg font-semibold mt-6 mb-3 text-gray-900 dark:text-gray-100" {...props} />,
                     h4: ({node, ...props}) => <h4 className="text-base font-semibold mt-5 mb-2 text-gray-900 dark:text-gray-100" {...props} />,
+                    h5: ({node, ...props}) => <h5 className="text-sm font-semibold mt-4 mb-2 text-gray-900 dark:text-gray-100" {...props} />,
+                    h6: ({node, ...props}) => <h6 className="text-xs font-semibold mt-3 mb-2 text-gray-900 dark:text-gray-100 uppercase tracking-wide" {...props} />,
                     blockquote: ({node, ...props}) => (
-                      <blockquote className="border-l-4 border-purple-400 pl-4 py-2 my-6 bg-gray-50 dark:bg-gray-800/30 italic text-gray-700 dark:text-gray-300" {...props} />
+                      <blockquote className="border-l-4 border-purple-400 pl-4 py-3 my-6 bg-gradient-to-r from-purple-50 to-transparent dark:from-purple-900/20 dark:to-transparent italic text-gray-700 dark:text-gray-300 rounded-r-lg" {...props} />
                     ),
                     code: ({ node, inline, className, children, ...props }: any) => {
-                      if (inline) {
-                        return (
-                          <code className="bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200 rounded-md px-2 py-1 font-mono text-sm font-medium" {...props}>
-                            {children}
-                          </code>
-                        );
+                      const content = String(children).replace(/\n$/, '');
+                      
+                      // Check for mathematical expressions in inline code
+                      if (inline && content.includes('\\') && /\\[a-zA-Z]+/.test(content)) {
+                        return <MathRenderer content={content} inline={true} />;
                       }
-                      return (
-                        <pre className="bg-gray-900 dark:bg-gray-800 rounded-lg p-4 my-6 overflow-x-auto border border-gray-200 dark:border-gray-700">
-                          <code className="font-mono text-sm text-gray-100 dark:text-gray-200" {...props}>{children}</code>
-                        </pre>
-                      );
+                      
+                      // Enhanced code block with syntax highlighting
+                      if (!inline) {
+                        // Check if it's a diagram or ASCII art
+                        const asciiPattern = /[│┌┐└┘├┤┬┴┼─━┃┏┓┗┛┣┫┳┻╋═║╔╗╚╝╠╣╦╩╬▲▼◄►→←↑↓+\-|\/\\]/;
+                        if (asciiPattern.test(content) || content.split('\n').length > 3) {
+                          return <DiagramRenderer content={content} />;
+                        }
+                        
+                        return <EnhancedCodeBlock className={className} inline={false}>{content}</EnhancedCodeBlock>;
+                      }
+                      
+                      return <EnhancedCodeBlock className={className} inline={true}>{content}</EnhancedCodeBlock>;
+                    },
+                    pre: ({ node, children, ...props }: any) => {
+                      // Handle pre-formatted text that might be diagrams
+                      const content = String(children);
+                      const asciiPattern = /[│┌┐└┘├┤┬┴┼─━┃┏┓┗┛┣┫┳┻╋═║╔╗╚╝╠╣╦╩╬▲▼◄►→←↑↓]/;
+                      
+                      if (asciiPattern.test(content)) {
+                        return <DiagramRenderer content={content} type="ascii" />;
+                      }
+                      
+                      return <pre className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 my-6 overflow-x-auto font-mono text-sm" {...props}>{children}</pre>;
                     },
                     hr: ({node, ...props}) => <hr className="my-8 border-gray-300 dark:border-gray-600" {...props} />,
                     table: ({node, ...props}) => (
-                      <div className="overflow-x-auto my-6">
-                        <table className="min-w-full border border-gray-200 dark:border-gray-700 rounded-lg" {...props} />
+                      <div className="overflow-x-auto my-6 rounded-lg border border-gray-200 dark:border-gray-700">
+                        <table className="min-w-full" {...props} />
                       </div>
                     ),
+                    thead: ({node, ...props}) => (
+                      <thead className="bg-gray-100 dark:bg-gray-800" {...props} />
+                    ),
                     th: ({node, ...props}) => (
-                      <th className="px-4 py-3 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 text-left font-semibold" {...props} />
+                      <th className="px-4 py-3 text-left font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700" {...props} />
                     ),
                     td: ({node, ...props}) => (
-                      <td className="px-4 py-3 border-b border-gray-200 dark:border-gray-700" {...props} />
-                    )
+                      <td className="px-4 py-3 text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700" {...props} />
+                    ),
+                    // Enhanced list rendering
+                    ul: ({node, ...props}) => <ul className="list-disc list-outside pl-6 my-5 space-y-2 text-gray-800 dark:text-gray-200" {...props} />,
+                    ol: ({node, ...props}) => <ol className="list-decimal list-outside pl-6 my-5 space-y-2 text-gray-800 dark:text-gray-200" {...props} />,
+                    // Task lists
+                    input: ({node, ...props}) => {
+                      if (props.type === 'checkbox') {
+                        return <input className="mr-2 rounded" {...props} />;
+                      }
+                      return <input {...props} />;
+                    }
                   }}
                 >
                   {message.content}
@@ -227,16 +269,17 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
             )
           )}
           
-          {!isEditing && (
-            <MessageActions 
-              isModel={isModel}
-              onCopy={handleCopy}
-              onEdit={!isModel && onEdit ? handleEdit : undefined}
-              onDelete={() => onDelete && onDelete(index)}
-              onRegenerate={isModel && onRegenerate ? () => onRegenerate(index) : undefined}
-            />
-          )}
         </div>
+        
+        {!isEditing && (
+          <MessageActions 
+            isModel={isModel}
+            onCopy={handleCopy}
+            onEdit={!isModel && onEdit ? handleEdit : undefined}
+            onDelete={() => onDelete && onDelete(index)}
+            onRegenerate={isModel && onRegenerate ? () => onRegenerate(index) : undefined}
+          />
+        )}
       </div>
     </div>
   );
@@ -567,9 +610,9 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
         </div>
       )}
       
-      <div className="flex-1 overflow-y-auto p-6 space-y-8">
+      <div className="flex-1 overflow-y-auto pt-24 px-6 pb-6 space-y-8">
         {messages.length === 0 && (
-          <div className="text-center text-gray-400 dark:text-gray-500 pt-20 flex flex-col items-center">
+          <div className="text-center text-gray-400 dark:text-gray-500 pt-8 flex flex-col items-center">
             <EarthIcon className="w-20 h-20 mb-4" />
             <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pink-500 to-purple-500">EARTH</h1>
             <h2 className="text-2xl font-semibold text-gray-600 dark:text-gray-300 mt-2">AI Brain Studio</h2>
@@ -593,15 +636,16 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
         )}
         
         {messages.map((msg, index) => (
-          <ChatMessage 
-            key={index} 
-            message={msg} 
-            index={index}
-            onCopy={handleCopyMessage}
-            onEdit={onEditMessage ? (index, content) => handleEditMessage(index, content) : undefined}
-            onDelete={onDeleteMessage ? () => handleDeleteMessage(index) : undefined}
-            onRegenerate={onRegenerateResponse ? () => handleRegenerateResponse(index) : undefined}
-          />
+          <div key={index} className={index === 0 ? 'mt-4' : ''}>
+            <ChatMessage 
+              message={msg} 
+              index={index}
+              onCopy={handleCopyMessage}
+              onEdit={onEditMessage ? (index, content) => handleEditMessage(index, content) : undefined}
+              onDelete={onDeleteMessage ? () => handleDeleteMessage(index) : undefined}
+              onRegenerate={onRegenerateResponse ? () => handleRegenerateResponse(index) : undefined}
+            />
+          </div>
         ))}
         
         {isLoading && messages[messages.length -1]?.role === 'user' && (
