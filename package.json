@@ -1,0 +1,37 @@
+{
+  "name": "earth-ai-brain-studio",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "build:prod": "node scripts/build-production.js",
+    "build:analyze": "node scripts/build-production.js --analyze",
+    "preview": "vite preview",
+    "pwa:audit": "lighthouse http://localhost:5173 --view --preset=desktop",
+    "pwa:test": "npm run build && npm run preview",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@google/genai": "^1.8.0",
+    "firebase": "^12.0.0",
+    "pdfjs-dist": "^4.0.379",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-markdown": "^9.0.1"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/node": "^20.11.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@vitejs/plugin-react": "^4.7.0",
+    "jsdom": "^26.1.0",
+    "typescript": "~5.3.3",
+    "vite": "^5.0.10",
+    "vitest": "^3.2.4"
+  }
+}
