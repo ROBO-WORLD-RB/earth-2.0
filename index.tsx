@@ -1,7 +1,7 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App.simple';
+import App from './App';
 
 // Add error handling for development
 window.addEventListener('error', (event) => {
