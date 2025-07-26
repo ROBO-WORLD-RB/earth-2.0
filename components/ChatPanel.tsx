@@ -95,13 +95,13 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   };
 
   return (
-    <div className={`flex items-start gap-4 group ${isModel ? '' : 'flex-row-reverse'}`}>
+    <div className={`flex items-start gap-4 group mb-8 ${isModel ? '' : 'flex-row-reverse'}`}>
       {isModel ? <BotIcon /> : <UserIcon />}
       <div className={`flex flex-col relative ${isModel ? 'items-start' : 'items-end'} flex-1`}>
         <div
-          className={`max-w-2xl lg:max-w-3xl relative ${
+          className={`max-w-4xl lg:max-w-5xl relative ${
             isModel 
-              ? '' // No "box" for AI replies, for a cleaner, document-like style.
+              ? 'py-6 px-6 bg-gray-50/50 dark:bg-gray-800/20 rounded-xl border border-gray-100 dark:border-gray-700/30' // Better styling for AI responses
               : 'px-5 py-3 rounded-2xl shadow-sm bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-br-none'
           }`}
         >
@@ -132,27 +132,48 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
                 </div>
               </div>
             ) : (
-              <div className="text-[17px] leading-relaxed pt-1 text-gray-700 dark:text-gray-300 text-justify">
+              <div className="text-[16px] leading-[1.7] pt-2 text-gray-800 dark:text-gray-200 max-w-none">
                 <ReactMarkdown
                   components={{
-                    p: ({node, ...props}) => <p className="mb-4 last:mb-0" {...props} />,
-                    ol: ({node, ...props}) => <ol className="list-decimal list-outside pl-5 my-4 space-y-2" {...props} />,
-                    ul: ({node, ...props}) => <ul className="list-disc list-outside pl-5 my-4 space-y-2" {...props} />,
-                    li: ({node, ...props}) => <li className="pl-2 mb-1" {...props} />,
-                    strong: ({node, ...props}) => <strong className="font-semibold" {...props} />,
-                    h1: ({node, ...props}) => <h1 className="text-2xl font-bold mt-6 mb-3" {...props} />,
-                    h2: ({node, ...props}) => <h2 className="text-xl font-bold mt-5 mb-2" {...props} />,
-                    h3: ({node, ...props}) => <h3 className="text-lg font-bold mt-4 mb-2" {...props} />,
+                    p: ({node, ...props}) => <p className="mb-6 last:mb-2 leading-[1.8]" {...props} />,
+                    ol: ({node, ...props}) => <ol className="list-decimal list-outside pl-6 my-6 space-y-3" {...props} />,
+                    ul: ({node, ...props}) => <ul className="list-disc list-outside pl-6 my-6 space-y-3" {...props} />,
+                    li: ({node, ...props}) => <li className="pl-2 mb-2 leading-[1.7]" {...props} />,
+                    strong: ({node, ...props}) => <strong className="font-semibold text-gray-900 dark:text-gray-100" {...props} />,
+                    em: ({node, ...props}) => <em className="italic text-gray-700 dark:text-gray-300" {...props} />,
+                    h1: ({node, ...props}) => <h1 className="text-2xl font-bold mt-8 mb-4 text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2" {...props} />,
+                    h2: ({node, ...props}) => <h2 className="text-xl font-bold mt-7 mb-3 text-gray-900 dark:text-gray-100" {...props} />,
+                    h3: ({node, ...props}) => <h3 className="text-lg font-semibold mt-6 mb-3 text-gray-900 dark:text-gray-100" {...props} />,
+                    h4: ({node, ...props}) => <h4 className="text-base font-semibold mt-5 mb-2 text-gray-900 dark:text-gray-100" {...props} />,
+                    blockquote: ({node, ...props}) => (
+                      <blockquote className="border-l-4 border-purple-400 pl-4 py-2 my-6 bg-gray-50 dark:bg-gray-800/30 italic text-gray-700 dark:text-gray-300" {...props} />
+                    ),
                     code: ({ node, inline, className, children, ...props }: any) => {
                       if (inline) {
-                        return <code className="bg-gray-100 dark:bg-gray-700/50 rounded-sm px-1.5 py-1 font-mono text-sm" {...props}>{children}</code>;
+                        return (
+                          <code className="bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200 rounded-md px-2 py-1 font-mono text-sm font-medium" {...props}>
+                            {children}
+                          </code>
+                        );
                       }
                       return (
-                        <pre className="bg-gray-100 dark:bg-gray-800/50 rounded-md p-4 my-4 overflow-x-auto">
-                          <code className="font-mono text-sm" {...props}>{children}</code>
+                        <pre className="bg-gray-900 dark:bg-gray-800 rounded-lg p-4 my-6 overflow-x-auto border border-gray-200 dark:border-gray-700">
+                          <code className="font-mono text-sm text-gray-100 dark:text-gray-200" {...props}>{children}</code>
                         </pre>
                       );
-                    }
+                    },
+                    hr: ({node, ...props}) => <hr className="my-8 border-gray-300 dark:border-gray-600" {...props} />,
+                    table: ({node, ...props}) => (
+                      <div className="overflow-x-auto my-6">
+                        <table className="min-w-full border border-gray-200 dark:border-gray-700 rounded-lg" {...props} />
+                      </div>
+                    ),
+                    th: ({node, ...props}) => (
+                      <th className="px-4 py-3 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 text-left font-semibold" {...props} />
+                    ),
+                    td: ({node, ...props}) => (
+                      <td className="px-4 py-3 border-b border-gray-200 dark:border-gray-700" {...props} />
+                    )
                   }}
                 >
                   {message.content}
@@ -546,7 +567,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
         </div>
       )}
       
-      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+      <div className="flex-1 overflow-y-auto p-6 space-y-8">
         {messages.length === 0 && (
           <div className="text-center text-gray-400 dark:text-gray-500 pt-20 flex flex-col items-center">
             <EarthIcon className="w-20 h-20 mb-4" />

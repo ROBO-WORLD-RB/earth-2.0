@@ -338,7 +338,8 @@ const App: React.FC = () => {
         // Voice service will handle this automatically
         break;
       case 'readLastMessage':
-        const lastMessage = activeMessages[activeMessages.length - 1];
+        const currentMessages = conversations.find(c => c.id === activeChatId)?.messages || [];
+        const lastMessage = currentMessages[currentMessages.length - 1];
         if (lastMessage && lastMessage.role === 'model') {
           voiceService.speak(lastMessage.content);
         }
@@ -346,7 +347,7 @@ const App: React.FC = () => {
       default:
         console.log('Unknown voice command:', action);
     }
-  }, [handleNewChat, activeMessages]);
+  }, [handleNewChat, conversations, activeChatId]);
 
   // Template selection handler
   const handleTemplateSelect = useCallback((template: MessageTemplate, variables: Record<string, string>) => {
@@ -379,7 +380,8 @@ const App: React.FC = () => {
       // This will be handled by ChatPanel
     });
     keyboardShortcutService.registerShortcutListener('readLastMessage', () => {
-      const lastMessage = activeMessages[activeMessages.length - 1];
+      const currentMessages = conversations.find(c => c.id === activeChatId)?.messages || [];
+      const lastMessage = currentMessages[currentMessages.length - 1];
       if (lastMessage && lastMessage.role === 'model') {
         voiceService.speak(lastMessage.content);
       }
@@ -400,7 +402,7 @@ const App: React.FC = () => {
       keyboardShortcutService.unregisterShortcutListener('toggleVoice');
       keyboardShortcutService.unregisterShortcutListener('readLastMessage');
     };
-  }, [handleNewChat, handleToggleTheme, activeMessages]);
+  }, [handleNewChat, handleToggleTheme, conversations, activeChatId]);
 
   // Command palette handler
   const handleExecuteCommand = useCallback((action: string) => {
@@ -439,7 +441,8 @@ const App: React.FC = () => {
         // This will be handled by ChatPanel
         break;
       case 'readLastMessage':
-        const lastMessage = activeMessages[activeMessages.length - 1];
+        const currentMessages = conversations.find(c => c.id === activeChatId)?.messages || [];
+        const lastMessage = currentMessages[currentMessages.length - 1];
         if (lastMessage && lastMessage.role === 'model') {
           voiceService.speak(lastMessage.content);
         }
@@ -447,7 +450,7 @@ const App: React.FC = () => {
       default:
         console.log('Unknown command:', action);
     }
-  }, [handleNewChat, handleToggleTheme, activeMessages]);
+  }, [handleNewChat, handleToggleTheme, conversations, activeChatId]);
 
   // Import completion handler
   const handleImportComplete = useCallback((result: any) => {
