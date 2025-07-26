@@ -95,14 +95,14 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   };
 
   return (
-    <div className={`flex items-start gap-4 group mb-8 ${isModel ? '' : 'flex-row-reverse'}`}>
+    <div className={`flex items-start gap-4 group mb-6 ${isModel ? '' : 'flex-row-reverse'}`}>
       {isModel ? <BotIcon /> : <UserIcon />}
       <div className={`flex flex-col relative ${isModel ? 'items-start' : 'items-end'} flex-1`}>
         <div
-          className={`max-w-4xl lg:max-w-5xl relative ${
+          className={`relative ${
             isModel 
-              ? 'py-6 px-6 bg-gray-50/50 dark:bg-gray-800/20 rounded-xl border border-gray-100 dark:border-gray-700/30' // Better styling for AI responses
-              : 'px-5 py-3 rounded-2xl shadow-sm bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-br-none'
+              ? 'max-w-3xl py-6 px-6 bg-gray-50/50 dark:bg-gray-800/20 rounded-xl border border-gray-100 dark:border-gray-700/30' // Optimal reading width
+              : 'max-w-2xl px-5 py-3 rounded-2xl shadow-sm bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-br-none'
           }`}
         >
           {isModel ? (
@@ -132,13 +132,13 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
                 </div>
               </div>
             ) : (
-              <div className="text-[16px] leading-[1.7] pt-2 text-gray-800 dark:text-gray-200 max-w-none">
+              <div className="text-[16px] leading-[1.7] pt-2 text-gray-800 dark:text-gray-200 max-w-3xl text-left">
                 <ReactMarkdown
                   components={{
-                    p: ({node, ...props}) => <p className="mb-6 last:mb-2 leading-[1.8]" {...props} />,
-                    ol: ({node, ...props}) => <ol className="list-decimal list-outside pl-6 my-6 space-y-3" {...props} />,
-                    ul: ({node, ...props}) => <ul className="list-disc list-outside pl-6 my-6 space-y-3" {...props} />,
-                    li: ({node, ...props}) => <li className="pl-2 mb-2 leading-[1.7]" {...props} />,
+                    p: ({node, ...props}) => <p className="mb-5 last:mb-2 leading-[1.8] text-left" {...props} />,
+                    ol: ({node, ...props}) => <ol className="list-decimal list-outside pl-6 my-5 space-y-2" {...props} />,
+                    ul: ({node, ...props}) => <ul className="list-disc list-outside pl-6 my-5 space-y-2" {...props} />,
+                    li: ({node, ...props}) => <li className="pl-2 mb-1 leading-[1.7] text-left" {...props} />,
                     strong: ({node, ...props}) => <strong className="font-semibold text-gray-900 dark:text-gray-100" {...props} />,
                     em: ({node, ...props}) => <em className="italic text-gray-700 dark:text-gray-300" {...props} />,
                     h1: ({node, ...props}) => <h1 className="text-2xl font-bold mt-8 mb-4 text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2" {...props} />,
