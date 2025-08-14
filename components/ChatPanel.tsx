@@ -21,6 +21,7 @@ interface ChatPanelProps {
   messages: Message[];
   onSendMessage: (message: string, files?: FileMessage[]) => void;
   isLoading: boolean;
+  isMobile?: boolean;
   attachedFiles?: FileMessage[];
   onFileRemove?: (fileId: string) => void;
   resetFilesTrigger?: number;
@@ -104,8 +105,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         <div
           className={`relative ${
             isModel 
-              ? 'max-w-3xl py-6 px-6 bg-gray-50/50 dark:bg-gray-800/20 rounded-xl border border-gray-100 dark:border-gray-700/30' // Optimal reading width
-              : 'max-w-2xl px-5 py-3 rounded-2xl shadow-sm bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-br-none'
+              ? 'w-full max-w-3xl py-6 px-6 bg-gray-50/50 dark:bg-gray-800/20 rounded-xl border border-gray-100 dark:border-gray-700/30' // Optimal reading width
+              : 'w-full max-w-2xl px-5 py-3 rounded-2xl shadow-sm bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-br-none'
           }`}
         >
           {isModel ? (
@@ -388,7 +389,8 @@ const WelcomeInstallButton: React.FC = () => {
 const ChatPanel: React.FC<ChatPanelProps> = ({ 
   messages, 
   onSendMessage, 
-  isLoading, 
+  isLoading,
+  isMobile,
   attachedFiles = [],
   onFileRemove,
   resetFilesTrigger,
@@ -622,16 +624,18 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
             <WelcomeInstallButton />
             
             {/* Keyboard shortcuts help */}
-            <div className="mt-8 text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800/50 p-4 rounded-lg">
-              <p className="font-medium mb-2">Keyboard shortcuts:</p>
-              <ul className="space-y-1">
-                <li><kbd className="px-2 py-1 bg-white dark:bg-gray-700 rounded shadow">Enter</kbd> Send message</li>
-                <li><kbd className="px-2 py-1 bg-white dark:bg-gray-700 rounded shadow">Shift</kbd> + <kbd className="px-2 py-1 bg-white dark:bg-gray-700 rounded shadow">Enter</kbd> New line</li>
-                <li><kbd className="px-2 py-1 bg-white dark:bg-gray-700 rounded shadow">Ctrl</kbd> + <kbd className="px-2 py-1 bg-white dark:bg-gray-700 rounded shadow">/</kbd> Focus input</li>
-                <li><kbd className="px-2 py-1 bg-white dark:bg-gray-700 rounded shadow">Ctrl</kbd> + <kbd className="px-2 py-1 bg-white dark:bg-gray-700 rounded shadow">K</kbd> Search conversations</li>
-                <li><kbd className="px-2 py-1 bg-white dark:bg-gray-700 rounded shadow">Ctrl</kbd> + <kbd className="px-2 py-1 bg-white dark:bg-gray-700 rounded shadow">T</kbd> Message templates</li>
-              </ul>
-            </div>
+            {!isMobile && (
+              <div className="mt-8 text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800/50 p-4 rounded-lg">
+                <p className="font-medium mb-2">Keyboard shortcuts:</p>
+                <ul className="space-y-1">
+                  <li><kbd className="px-2 py-1 bg-white dark:bg-gray-700 rounded shadow">Enter</kbd> Send message</li>
+                  <li><kbd className="px-2 py-1 bg-white dark:bg-gray-700 rounded shadow">Shift</kbd> + <kbd className="px-2 py-1 bg-white dark:bg-gray-700 rounded shadow">Enter</kbd> New line</li>
+                  <li><kbd className="px-2 py-1 bg-white dark:bg-gray-700 rounded shadow">Ctrl</kbd> + <kbd className="px-2 py-1 bg-white dark:bg-gray-700 rounded shadow">/</kbd> Focus input</li>
+                  <li><kbd className="px-2 py-1 bg-white dark:bg-gray-700 rounded shadow">Ctrl</kbd> + <kbd className="px-2 py-1 bg-white dark:bg-gray-700 rounded shadow">K</kbd> Search conversations</li>
+                  <li><kbd className="px-2 py-1 bg-white dark:bg-gray-700 rounded shadow">Ctrl</kbd> + <kbd className="px-2 py-1 bg-white dark:bg-gray-700 rounded shadow">T</kbd> Message templates</li>
+                </ul>
+              </div>
+            )}
           </div>
         )}
         
@@ -766,19 +770,19 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyPress}
-              placeholder="Talk to your custom AI... (Ctrl+/ to focus, Ctrl+K to search, Ctrl+T for templates)"
+              placeholder={isMobile ? "Talk to your AI..." : "Talk to your custom AI... (Ctrl+/ to focus, Ctrl+K to search, Ctrl+T for templates)"}
               rows={1}
-              className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-full py-3 pl-5 pr-16 text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-purple-400 focus:outline-none resize-none transition-all duration-200"
+              className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-full py-3 pl-5 pr-12 sm:pr-16 text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-purple-400 focus:outline-none resize-none transition-all duration-200"
               disabled={isLoading}
               style={{paddingTop: '0.8rem', paddingBottom: '0.8rem'}}
             />
             <button
               onClick={handleSend}
               disabled={isLoading || (!input.trim() && pendingFiles.length === 0)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:opacity-90 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all"
+              className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 p-3 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:opacity-90 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all"
               aria-label="Send message"
             >
-              <SendIcon />
+              <SendIcon className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
           </div>
         </div>
