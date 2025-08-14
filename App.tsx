@@ -13,6 +13,7 @@ import { templateService, MessageTemplate } from './services/templateService';
 import ChatPanel from './components/ChatPanel';
 import SidePanel from './components/SidePanel';
 import PanelToggleButton from './components/PanelToggleButton';
+import useMediaQuery from './hooks/useMediaQuery';
 import EarthIcon from './components/icons/EarthIcon';
 import AuthPage from './components/AuthPage';
 import UserProfile from './components/UserProfile';
@@ -58,7 +59,8 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
-  const [isPanelVisible, setIsPanelVisible] = useState(false);
+  const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
+  const hideTimeoutRef = useRef<number | null>(null);
   const [attachedFiles, setAttachedFiles] = useState<FileMessage[]>([]);
   const [theme, setTheme] = useState<Theme>(() => {
     try {
@@ -81,7 +83,7 @@ const App: React.FC = () => {
   const [showFeatureDiscovery, setShowFeatureDiscovery] = useState(false);
   const [showFeatureNotification, setShowFeatureNotification] = useState(false);
 
-  const hideTimeoutRef = useRef<number | null>(null);
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   // Auth effect
   useEffect(() => {
@@ -264,7 +266,7 @@ const App: React.FC = () => {
     setConversations(prev => [newConversation, ...prev]);
     setActiveChatId(newId);
     setAttachedFiles([]);
-    setIsPanelVisible(false);
+    setIsSidePanelOpen(false);
     
     // Track analytics
     trackFeatureUsage('chat', 'new_conversation');
@@ -281,7 +283,7 @@ const App: React.FC = () => {
         setAttachedFiles([]);
       }
     }
-    setIsPanelVisible(false);
+    setIsSidePanelOpen(false);
   }, [activeChatId]);
 
   const handleDeleteChat = useCallback(async (id: string) => {
@@ -367,7 +369,7 @@ const App: React.FC = () => {
   useEffect(() => {
     // Register keyboard shortcut handlers
     keyboardShortcutService.registerShortcutListener('newChat', () => handleNewChat());
-    keyboardShortcutService.registerShortcutListener('togglePanel', () => setIsPanelVisible(prev => !prev));
+    keyboardShortcutService.registerShortcutListener('togglePanel', () => setIsSidePanelOpen(prev => !prev));
     keyboardShortcutService.registerShortcutListener('searchConversations', () => setShowSearchPanel(true));
     keyboardShortcutService.registerShortcutListener('commandPalette', () => setShowCommandPalette(true));
     keyboardShortcutService.registerShortcutListener('showTemplates', () => setShowTemplatePanel(true));
@@ -414,7 +416,7 @@ const App: React.FC = () => {
         handleNewChat();
         break;
       case 'togglePanel':
-        setIsPanelVisible(prev => !prev);
+        setIsSidePanelOpen(prev => !prev);
         break;
       case 'searchConversations':
         setShowSearchPanel(true);
@@ -561,14 +563,6 @@ const App: React.FC = () => {
     }
   };
 
-  const handlePanelMouseEnter = () => {
-    if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
-    setIsPanelVisible(true);
-  };
-
-  const handlePanelMouseLeave = () => {
-    hideTimeoutRef.current = window.setTimeout(() => setIsPanelVisible(false), 300);
-  };
 
   const handleDeleteMessage = (index: number) => {
     if (!activeChatId) return;
@@ -681,6 +675,19 @@ const App: React.FC = () => {
     }
   };
 
+  const handlePanelMouseEnter = () => {
+    if (!isMobile) {
+      if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+      setIsSidePanelOpen(true);
+    }
+  };
+
+  const handlePanelMouseLeave = () => {
+    if (!isMobile) {
+      hideTimeoutRef.current = window.setTimeout(() => setIsSidePanelOpen(false), 300);
+    }
+  };
+
   // Computed values
   const activeMessages = conversations.find(c => c.id === activeChatId)?.messages || [];
 
@@ -718,7 +725,7 @@ const App: React.FC = () => {
   // Main app
   return (
     <ErrorBoundary>
-      <div className="h-screen w-screen font-sans bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 overflow-hidden">
+      <div className={`h-screen w-screen font-sans bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 overflow-hidden ${isMobile && isSidePanelOpen ? 'overflow-hidden' : ''}`}>
       <PWAInstallPrompt />
       <PWAUpdateNotification />
       <InstallButton />
@@ -737,6 +744,18 @@ const App: React.FC = () => {
         onShowVoiceSettings={() => setShowVoiceSettings(true)}
       />
 
+      {isMobile && (
+        <button
+          onClick={() => setIsSidePanelOpen(true)}
+          className="hamburger-menu absolute top-4 left-4 z-40 p-3 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:shadow-md transition-all text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400"
+          title="Open Menu"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      )}
+
       <div className="absolute top-4 right-4 z-40 flex items-center gap-2">
         <button
           onClick={() => setShowFeatureDiscovery(true)}
@@ -750,37 +769,53 @@ const App: React.FC = () => {
         <UserProfile user={user!} />
       </div>
       
-      <ChatPanel
-        messages={activeMessages}
-        onSendMessage={handleSendMessage}
-        isLoading={isLoading}
-        attachedFiles={attachedFiles}
-        onFileRemove={async (fileId: string) => {
-          try {
-            await fileStorage.deleteFile(fileId);
-            setAttachedFiles(prev => prev.filter(f => f.id !== fileId));
-          } catch (error) {
-            console.error('Error removing file:', error);
-          }
-        }}
-        resetFilesTrigger={resetFilesTrigger}
-        onDeleteMessage={handleDeleteMessage}
-        onEditMessage={handleEditMessage}
-        onRegenerateResponse={handleRegenerateResponse}
-        onVoiceCommand={handleVoiceCommand}
-        onShowVoiceSettings={() => setShowVoiceSettings(true)}
-        onShowSearch={() => setShowSearchPanel(true)}
-        onShowTemplates={() => setShowTemplatePanel(true)}
-        onTemplateSelect={handleTemplateSelect}
-      />
+      <div className="main-content">
+        <ChatPanel
+          messages={activeMessages}
+          onSendMessage={handleSendMessage}
+          isLoading={isLoading}
+          isMobile={isMobile}
+          attachedFiles={attachedFiles}
+          onFileRemove={async (fileId: string) => {
+            try {
+              await fileStorage.deleteFile(fileId);
+              setAttachedFiles(prev => prev.filter(f => f.id !== fileId));
+            } catch (error) {
+              console.error('Error removing file:', error);
+            }
+          }}
+          resetFilesTrigger={resetFilesTrigger}
+          onDeleteMessage={handleDeleteMessage}
+          onEditMessage={handleEditMessage}
+          onRegenerateResponse={handleRegenerateResponse}
+          onVoiceCommand={handleVoiceCommand}
+          onShowVoiceSettings={() => setShowVoiceSettings(true)}
+          onShowSearch={() => setShowSearchPanel(true)}
+          onShowTemplates={() => setShowTemplatePanel(true)}
+          onTemplateSelect={handleTemplateSelect}
+        />
+      </div>
       
+      {isMobile && isSidePanelOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-20"
+          onClick={() => setIsSidePanelOpen(false)}
+        ></div>
+      )}
+
       <div onMouseEnter={handlePanelMouseEnter} onMouseLeave={handlePanelMouseLeave}>
-        {!isPanelVisible && <PanelToggleButton />}
+        {!isMobile && !isSidePanelOpen && <PanelToggleButton />}
         <SidePanel
-          isVisible={isPanelVisible}
+          isVisible={isSidePanelOpen}
           initialInstruction={systemInstruction}
-          onSave={handleSaveSettings}
-          onClear={handleClearSettings}
+          onSave={(instruction) => {
+            handleSaveSettings(instruction);
+            setIsSidePanelOpen(false);
+          }}
+          onClear={() => {
+            handleClearSettings();
+            setIsSidePanelOpen(false);
+          }}
           saveStatus={saveStatus}
           conversations={conversations}
           activeChatId={activeChatId}
